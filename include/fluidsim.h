@@ -68,6 +68,8 @@ public:
     void setVelocity(const Vector3d& v);
     bool valid(const int& i, const int& j, const int& k);
     Vector3d getVelocity(const Vector3d& position);
+
+    void run(double dt, int n);// no ui
 };
 
 #endif

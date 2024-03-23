@@ -59,6 +59,13 @@ FluidSim::FluidSim(
 }
 
 void FluidSim::advance(const double& dt){
+    // debug
+    std::cout 
+    << "V_liquid: " << max(u.cwiseAbs().maxCoeff(), v.cwiseAbs().maxCoeff(), w.cwiseAbs().maxCoeff()) 
+    << " p_max: " << p.cwiseAbs().maxCoeff() 
+    << " d_max: " << d.cwiseAbs().maxCoeff() 
+    << std::endl;
+
     extrapolate();
     advectParticles(dt);
     computePhi();
@@ -332,8 +339,14 @@ void FluidSim::project(){
                      -computeVolume(i, j, k, phi, 2) * v(i, j+1, k) + computeVolume(i, j-1, k, phi, 2) * v(i, j, k)
                      -computeVolume(i, j, k, phi, 3) * w(i, j, k+1) + computeVolume(i, j, k-1, phi, 3) * w(i, j, k);
     }
-    // 
-
+    // ensure A is positive definite
+    for (int i = 0; i < n1; i++) for (int j = 0; j < n2; j++) for (int k = 0; k < n3; k++){
+        if(Adiag(i, j, k)==0 && Aplusi(i, j, k)==0 && Aplusj(i, j, k)==0 && Aplusk(i, j, k)==0 && Aplusi(i-1, j, k)==0 && Aplusj(i, j-1, k)==0 && Aplusk(i, j, k-1)==0){
+            Adiag(i, j, k) = 1;
+            d(i, j, k) = 0;
+        }		
+	}
+    // TODO: remove the 1D null space
     // solve A * p = d
     solve(10);
     // update u
@@ -398,7 +411,13 @@ void FluidSim::solve(const int& maxIterations){
 }
 
 void FluidSim::constrain(){
-    // TODO
-    // ######
+    // TODO    
 }
 
+void FluidSim::run(double dt, int n){
+    while (1) {				
+		for (int i = 0; i < n; i++) {
+			advance(dt);
+		}
+	}	
+}
