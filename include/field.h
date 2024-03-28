@@ -10,15 +10,18 @@ private:
 public:
     Field3() : N1_(0), N2_(0), N3_(0) {}
 
-    Field3(const int& N1, const int& N2, const int& N3) : N1_(N1), N2_(N2), N3_(N3) {    
+    Field3(const int& N1, const int& N2, const int& N3) : N1_(N1), N2_(N2), N3_(N3) {  
+        assert(N1>0 && N2>0 && N3>0);
         this->resize(N1 * N2 * N3);
     }
 
-    T& operator()(int i, int j, int k) {        
+    T& operator()(int i, int j, int k) {
+        assert(i>=0 && i<N1_ && j>=0 && j<N2_ && k>=0 && k<N3_);
         return this->coeffRef(i * N2_ * N3_ + j * N3_ + k);
     }
 
-    const T& operator()(int i, int j, int k) const {        
+    const T& operator()(int i, int j, int k) const {
+        assert(i>=0 && i<N1_ && j>=0 && j<N2_ && k>=0 && k<N3_);
         return this->coeffRef(i * N2_ * N3_ + j * N3_ + k);
     }
 

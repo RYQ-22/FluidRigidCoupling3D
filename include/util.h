@@ -7,7 +7,6 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include <cassert>
 
 namespace appconstants {
     const double PI = 3.1415926535897932384626433832795;
@@ -630,18 +629,19 @@ void interpolate_gradient(Eigen::Matrix<T, 3, 1>& grad, const Eigen::Vector3d& p
     interpolate_gradient(grad, pos(0), pos(1), pos(2), v);
 }
 
-inline double computeTriangleArea(const double& phi0, const double& phi1, const double& phi2) {
-    if (phi0 > 0 && phi1 > 0 && phi2 > 0) {
-        return 0.0;
+inline double computeTriangleArea(double phi0, double phi1, double phi2) {
+    sort(phi0, phi1, phi2);
+    if(phi0 > 0){
+        return 0;
     }
-    else if (phi0 <= 0 && phi1 <= 0 && phi2 <= 0) {
-        return 1.0;
+    if(phi2 < 0){
+        return 1;
     }
-    else if (second(phi0, phi1, phi2) <= 0) {
-        return max(phi0, phi1, phi2) / (max(phi0, phi1, phi2) - min(phi0, phi1, phi2)) * max(phi0, phi1, phi2) / (max(phi0, phi1, phi2) - second(phi0, phi1, phi2));
+    if(phi1 < 0){
+        return phi0/(phi0-phi2) * phi1/(phi1-phi2);
     }
-    else {
-        return 1.0 - min(phi0, phi1, phi2) / (min(phi0, phi1, phi2) - max(phi0, phi1, phi2)) * min(phi0, phi1, phi2) / (min(phi0, phi1, phi2) - second(phi0, phi1, phi2));
+    else{
+        return 1 - phi1/(phi1-phi0) * phi2/(phi2-phi0);
     }
 }
 

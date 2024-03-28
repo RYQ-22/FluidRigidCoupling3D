@@ -33,6 +33,7 @@ private:
     Field3i valid_u, valid_v, valid_w;
     Field3i valid_u_old, valid_v_old, valid_w_old;
     // for projection
+    Field3d weights_u, weights_v, weights_w;
     Field3d Adiag, Aplusi, Aplusj, Aplusk;
     Field3d d, p;
     Field3d z, s; // z: auxiliary vetor, s: search vector
@@ -41,7 +42,9 @@ private:
     double particle_radius;
     std::vector<Vector3d> particles;
     
-    double computeVolume(const int& i, const int& j, const int& k, const Field3d& phi, const int& id);
+    double phi_solid_ave(const double& i, const double& j, const double& k);
+    double phi_solid_ave(const Vector3d& pos);
+
     // advance
     // 1. add force
     void applyForce(const double& dt);
@@ -52,6 +55,9 @@ private:
     void semiLagrangian(const Field3d& field, Field3d& field_new, const double& dt, const int& id);
     // 3. project
     void project();
+    void computeWeights();
+    double computeFraction(const double& phi0, const double& phi1, const double& phi2, const double& phi3);
+    double computeFraction(const double& phi0, const double& phi1);
     void solve(const int& maxIterations);
     void applyA(const Field3d& x, Field3d& ans);
     // some details
@@ -65,8 +71,7 @@ public:
     // init
     FluidSim(const int& n1_init, const int& n2_init, const int& n3_init, const double& l_init, const std::vector<double>& phi_init, const std::vector<double>& phi_solid_init);
     void advance(const double& dt);
-    void setVelocity(const Vector3d& v);
-    bool valid(const int& i, const int& j, const int& k);
+    void setVelocity(const Vector3d& vec);
     Vector3d getVelocity(const Vector3d& position);
 
     void run(double dt, int n);// no ui
