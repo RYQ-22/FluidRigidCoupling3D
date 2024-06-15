@@ -1,12 +1,15 @@
 #ifndef FIELD_H
 #define FIELD_H
 
-#include "Eigen/Dense"
+#include "log.h"
+
+namespace backend {
 
 template<class T>
 class Field3 : public Eigen::Matrix<T, Eigen::Dynamic, 1> {
 private:
     int N1_, N2_, N3_;    
+    
 public:
     Field3() : N1_(0), N2_(0), N3_(0) {}
 
@@ -35,6 +38,23 @@ public:
         return result;
     }
 
+    Field3<T> operator-(const Field3<T>& other) const {
+        assert(this->N1_ == other.N1_ && this->N2_ == other.N2_ && this->N3_ == other.N3_);
+        Field3<T> result = *this;
+        result -= other;        
+        result.N1_ = this->N1_;
+        result.N2_ = this->N2_;
+        result.N3_ = this->N3_;
+        return result;
+    }
+    
+    Field3<T> operator-() const {        
+        Field3<T> result(this->N1_, this->N2_, this->N3_);
+        result.setZero(); 
+        result -= *this;        
+        return result;
+    }
+
     Field3<T> operator*(const T& scalar) const {        
         Field3<T> result = *this;
         result *= scalar;
@@ -58,6 +78,12 @@ Field3<T> operator*(const T& scalar, const Field3<T>& other) {
     Field3<T> result = other;
     result *= scalar;
     return result;
+}
+
+// Alias
+using Field3d = Field3<double>;
+using Field3i = Field3<int>;
+
 }
 
 #endif

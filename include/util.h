@@ -3,26 +3,16 @@
 
 #include "field.h"
 
-#include <algorithm>
-#include <vector>
-#include <cmath>
-#include <iostream>
-
-namespace appconstants {
-    const double PI = 3.1415926535897932384626433832795;
-    const double G = 9.8;
-}
-
-
 #ifdef WIN32
 #undef min
 #undef max
 #endif
 
+namespace backend {
+
 using std::min;
 using std::max;
 using std::swap;
-
 
 inline int sign(const float& x)
 {
@@ -429,98 +419,6 @@ inline S cubic_interp(const S& value_neg1, const S& value0, const S& value1, con
 }
 
 template<class T>
-void zero(std::vector<T>& v)
-{
-    for (int i = (int)v.size() - 1; i >= 0; --i) v[i] = 0;
-}
-
-template<class T>
-T abs_max(const std::vector<T>& v)
-{
-    T m = 0;
-    for (int i = (int)v.size() - 1; i >= 0; --i) {
-        if (std::fabs(v[i]) > m)
-            m = std::fabs(v[i]);
-    }
-    return m;
-}
-
-template<class T>
-bool contains(const std::vector<T>& a, T e)
-{
-    for (unsigned int i = 0; i < a.size(); ++i)
-        if (a[i] == e) return true;
-    return false;
-}
-
-template<class T>
-void add_unique(std::vector<T>& a, T e)
-{
-    for (unsigned int i = 0; i < a.size(); ++i)
-        if (a[i] == e) return;
-    a.push_back(e);
-}
-
-template<class T>
-void insert(std::vector<T>& a, unsigned int index, T e)
-{
-    a.push_back(a.back());
-    for (unsigned int i = (unsigned int)a.size() - 1; i > index; --i)
-        a[i] = a[i - 1];
-    a[index] = e;
-}
-
-template<class T>
-void erase(std::vector<T>& a, unsigned int index)
-{
-    for (unsigned int i = index; i < a.size() - 1; ++i)
-        a[i] = a[i + 1];
-    a.pop_back();
-}
-
-template<class T>
-void erase_swap(std::vector<T>& a, unsigned int index)
-{
-    for (unsigned int i = index; i < a.size() - 1; ++i)
-        swap(a[i], a[i + 1]);
-    a.pop_back();
-}
-
-template<class T>
-void erase_unordered(std::vector<T>& a, unsigned int index)
-{
-    a[index] = a.back();
-    a.pop_back();
-}
-
-template<class T>
-void erase_unordered_swap(std::vector<T>& a, unsigned int index)
-{
-    swap(a[index], a.back());
-    a.pop_back();
-}
-
-template<class T>
-void find_and_erase_unordered(std::vector<T>& a, const T& doomed_element)
-{
-    for (unsigned int i = 0; i < a.size(); ++i)
-        if (a[i] == doomed_element) {
-            erase_unordered(a, i);
-            return;
-        }
-}
-
-template<class T>
-void replace_once(std::vector<T>& a, const T& old_element, const T& new_element)
-{
-    for (unsigned int i = 0; i < a.size(); ++i)
-        if (a[i] == old_element) {
-            a[i] = new_element;
-            return;
-        }
-}
-
-template<class T>
 void write_matlab(std::ostream& output, const std::vector<T>& a, const char* variable_name, bool column_vector = true, int significant_digits = 18)
 {
     output << variable_name << "=[";
@@ -539,9 +437,12 @@ void write_matlab(std::ostream& output, const std::vector<T>& a, const char* var
 template<class T>
 T sample_min(const Eigen::Vector3d& pos, const Field3<T>& v) {
     assert(pos.size() == 3);
-    int i0 = pos(0) > 0 ? (int)pos(0) : (int)pos(0) - 1;
-    int j0 = pos(1) > 0 ? (int)pos(1) : (int)pos(1) - 1;
-    int k0 = pos(2) > 0 ? (int)pos(2) : (int)pos(2) - 1;
+    // here i, j, k > 0
+    Assert(pos(0) >= 0 && pos(1) >= 0 && pos(2) >= 0, "sample_min", "The input i, j, k should >= 0.");
+    Assert(pos(0) < v.getN1()-1 && pos(1) < v.getN2()-1 && pos(2) < v.getN3()-1, "sample_min", "out of index");
+    int i0 = static_cast<int>(pos(0));
+    int j0 = static_cast<int>(pos(1));
+    int k0 = static_cast<int>(pos(2));
     return min(
         v(i0, j0, k0),
         v(i0 + 1, j0, k0),
@@ -555,9 +456,13 @@ T sample_min(const Eigen::Vector3d& pos, const Field3<T>& v) {
 
 template<class T>
 T sample_max(const Eigen::Vector3d& pos, const Field3<T>& v) {
-    int i0 = pos(0) > 0 ? (int)pos(0) : (int)pos(0) - 1;
-    int j0 = pos(1) > 0 ? (int)pos(1) : (int)pos(1) - 1;
-    int k0 = pos(2) > 0 ? (int)pos(2) : (int)pos(2) - 1;
+    assert(pos.size() == 3);
+    // here i, j, k > 0
+    Assert(pos(0) >= 0 && pos(1) >= 0 && pos(2) >= 0, "sample_max", "The input i, j, k should >= 0.");
+    Assert(pos(0) < v.getN1()-1 && pos(1) < v.getN2()-1 && pos(2) < v.getN3()-1, "sample_max", "out of index");
+    int i0 = static_cast<int>(pos(0));
+    int j0 = static_cast<int>(pos(1));
+    int k0 = static_cast<int>(pos(2));
     return max(
         v(i0, j0, k0),
         v(i0 + 1, j0, k0),
@@ -571,9 +476,12 @@ T sample_max(const Eigen::Vector3d& pos, const Field3<T>& v) {
 
 template<class T>
 T interpolate_value(double i, double j, double k, const Field3<T>& v) {
-    int i0 = i > 0 ? (int)i : (int)i - 1;
-    int j0 = j > 0 ? (int)j : (int)j - 1;
-    int k0 = k > 0 ? (int)k : (int)k - 1;
+    // here i, j, k > 0
+    Assert(i >= 0 && j >= 0 && k >= 0, "interpolate_value", "The input i, j, k should >= 0 .");
+    Assert(i < v.getN1()-1 && j < v.getN2()-1 && k < v.getN3()-1, "interpolate_value", "out of index");
+    int i0 = static_cast<int>(i);
+    int j0 = static_cast<int>(j);
+    int k0 = static_cast<int>(k);        
     float a1 = i0 + 1.0f - i, a2 = i - i0;
     float b1 = j0 + 1.0f - j, b2 = j - j0;
     float c1 = k0 + 1.0f - k, c2 = k - k0;
@@ -595,9 +503,12 @@ T interpolate_value(const Eigen::Vector3d& pos, const Field3<T>& v) {
 
 template<class T>
 void interpolate_gradient(Eigen::Matrix<T, 3, 1>& grad, double i, double j, double k, const Field3<T>& v) {
-    int i0 = i > 0 ? (int)i : (int)i - 1;
-    int j0 = j > 0 ? (int)j : (int)j - 1;
-    int k0 = k > 0 ? (int)k : (int)k - 1;
+    // here i, j, k >= 0
+    Assert(i >= 0 && j >= 0 && k >= 0, "interpolate_gradient", "The input i, j, k should >= 0.");
+    Assert(i < v.getN1()-1 && j < v.getN2()-1 && k < v.getN3()-1, "interpolate_gradient", "out of index.");
+    int i0 = static_cast<int>(i);
+    int j0 = static_cast<int>(j);
+    int k0 = static_cast<int>(k);
     float a1 = i0 + 1.0f - i, a2 = i - i0;
     float b1 = j0 + 1.0f - j, b2 = j - j0;
     float c1 = k0 + 1.0f - k, c2 = k - k0;
@@ -630,18 +541,44 @@ void interpolate_gradient(Eigen::Matrix<T, 3, 1>& grad, const Eigen::Vector3d& p
 }
 
 inline double computeTriangleArea(double phi0, double phi1, double phi2) {
-    sort(phi0, phi1, phi2);
-    if(phi0 > 0){
-        return 0;
+    /*
+    
+    phi1      
+     ___________  phi2
+    |         *
+    |       *
+    |    *
+    | *
+    
+    phi0
+
+    */
+    sort(phi0, phi1, phi2); // --> phi0 <= phi1 <= phi2    
+    if (phi0 > 0) {
+        return 0;    
     }
-    if(phi2 < 0){
+    if (phi2 <= 0) {
         return 1;
     }
-    if(phi1 < 0){
-        return phi0/(phi0-phi2) * phi1/(phi1-phi2);
+    if(phi1 <= 0) {
+        return phi0 / (phi0-phi2) * phi1 / (phi1-phi2);
     }
-    else{
-        return 1 - phi1/(phi1-phi0) * phi2/(phi2-phi0);
+    else {
+        return 1 - phi1 / (phi1-phi0) * phi2 / (phi2-phi0);
+    }
+}
+
+inline double computeFraction(const double& phi0, const double& phi1, const double& phi2, const double& phi3){
+    return (computeTriangleArea(phi0, phi1, phi2) + computeTriangleArea(phi2, phi3, phi0)) / 2;
+}
+
+inline double computeFraction(const double& phi0, const double& phi1){
+    Assert((phi0 < 0 && phi1 > 0) || (phi0 > 0 && phi1 < 0), "computeFraction", "all positive or all non-positive.");
+    if (phi0 < 0) {
+        return -phi0/(phi1-phi0);
+    }
+    else {
+        return -phi1/(phi0-phi1);
     }
 }
 
@@ -659,5 +596,25 @@ inline std::vector<T> union_phi(const std::vector<T>& phi1, const std::vector<T>
     return ans;
 }
 
+class CleanupHelper {
+public:
+	CleanupHelper(const std::string& folderPath) : folderPath_(folderPath) {}
+
+	~CleanupHelper() {
+		try {
+			for (const auto& entry : std::filesystem::directory_iterator(folderPath_)) {
+				std::filesystem::remove(entry.path());
+			}
+		}
+		catch (const std::filesystem::filesystem_error& err) {
+			std::cerr << "Error during cleanup: " << err.what() << std::endl;
+		}
+	}
+
+private:
+	std::string folderPath_;
+};
+
+}
 
 #endif
